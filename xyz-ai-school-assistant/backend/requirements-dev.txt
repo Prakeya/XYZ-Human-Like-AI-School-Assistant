@@ -1,0 +1,3 @@
+# Dev/test-only dependency, on top of requirements.txt.
+# httpx (already in requirements.txt) is what FastAPI's TestClient uses under the hood.
+pytest>=7.4,<9

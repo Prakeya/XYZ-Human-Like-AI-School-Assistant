@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root {
+  height: 100%;
+}
+
+::selection {
+  background: #E6A23C55;
+}
+
+/* Hairline scrollbar to match the paper/ink token system instead of the OS default */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #DAD5C8 transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background-color: #DAD5C8;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
