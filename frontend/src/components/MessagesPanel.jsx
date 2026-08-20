@@ -3,6 +3,17 @@ import { api, ApiError } from "../api.js";
 import { useLanguage } from "../context/LanguageContext.jsx";
 import { t } from "../utils/i18n.js";
 
+const ROLE_KEY = {
+  student: "roleStudent",
+  parent: "roleParent",
+  teacher: "roleTeacher",
+  principal: "rolePrincipal",
+};
+function roleLabel(role, language) {
+  const key = ROLE_KEY[role];
+  return key ? t(key, language) : role;
+}
+
 /**
  * Simple two-pane contact list + thread view, used on Parent, Teacher, and
  * Principal dashboards for parent<->teacher and teacher<->principal
@@ -48,7 +59,7 @@ export default function MessagesPanel({ title, contacts = [], token, currentUser
       setThread((prev) => [...prev, msg]);
       setInput("");
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Couldn't send message.");
+      setError(err instanceof ApiError ? err.message : t("couldntSendMessage", language));
     } finally {
       setSending(false);
     }
@@ -81,7 +92,7 @@ export default function MessagesPanel({ title, contacts = [], token, currentUser
               }`}
             >
               {c.name}
-              <span className="ml-1 text-[10px] uppercase text-muted/70">{c.role}</span>
+              <span className="ml-1 text-[10px] uppercase text-muted/70">{roleLabel(c.role, language)}</span>
             </button>
           ))}
         </div>

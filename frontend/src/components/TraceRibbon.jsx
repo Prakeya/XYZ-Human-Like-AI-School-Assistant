@@ -1,14 +1,19 @@
 import React, { useState } from "react";
 import { t } from "../utils/i18n.js";
 
-const STEP_LABEL = {
-  intent_detected: "Intent",
-  permission_check: "Permission",
-  permission_denied: "Permission",
-  tool_call: "Tool call",
-  security_block: "Security",
-  clarification_needed: "Clarification",
+const STEP_LABEL_KEY = {
+  intent_detected: "traceStepIntent",
+  permission_check: "traceStepPermission",
+  permission_denied: "traceStepPermission",
+  tool_call: "traceStepToolCall",
+  security_block: "traceStepSecurity",
+  clarification_needed: "traceStepClarification",
 };
+
+function stepLabel(step, language) {
+  const key = STEP_LABEL_KEY[step];
+  return key ? t(key, language) : step;
+}
 
 function chipTone(step) {
   if (step.step === "permission_check") return step.allowed ? "success" : "danger";
@@ -23,12 +28,12 @@ const TONE_CLASSES = {
   neutral: "border-line bg-paper-alt text-muted",
 };
 
-function chipDetail(step) {
+function chipDetail(step, language) {
   switch (step.step) {
     case "intent_detected":
       return step.intent;
     case "permission_check":
-      return step.allowed ? "allowed" : step.reason;
+      return step.allowed ? t("traceAllowed", language) : step.reason;
     case "permission_denied":
       return step.reason;
     case "tool_call":
@@ -70,8 +75,8 @@ export default function TraceRibbon({ trace, language }) {
                 className={`rounded-md border px-2 py-1 ${TONE_CLASSES[chipTone(step)]}`}
                 title={JSON.stringify(step)}
               >
-                <span className="font-semibold">{STEP_LABEL[step.step] || step.step}</span>
-                {chipDetail(step) ? <span className="opacity-70"> · {String(chipDetail(step))}</span> : null}
+                <span className="font-semibold">{stepLabel(step.step, language)}</span>
+                {chipDetail(step, language) ? <span className="opacity-70"> · {String(chipDetail(step, language))}</span> : null}
               </span>
               {i < trace.length - 1 && <span className="text-line">→</span>}
             </React.Fragment>

@@ -1,12 +1,15 @@
 import React from "react";
+import { useLanguage } from "../context/LanguageContext.jsx";
+import { t } from "../utils/i18n.js";
 
 export default function VoiceButton({ listening, supported, onClick, color = "#14213D" }) {
+  const { language } = useLanguage();
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={!supported}
-      title={supported ? "Speak your message" : "Voice input not supported in this browser"}
+      title={supported ? t("speakYourMessageTitle", language) : t("voiceNotSupportedTitle", language)}
       className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-all
         ${listening ? "border-marigold bg-marigold/10" : "border-line bg-white hover:border-ink/40"}
         disabled:cursor-not-allowed disabled:opacity-30`}

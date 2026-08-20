@@ -201,7 +201,7 @@ export default function ParentDashboard({ data, token, currentUserId, onRefresh 
                 <tr key={req.id}>
                   <td className="px-4 py-3 font-medium text-ink-text">
                     {requestTypeLabel(req.request_type, language)}
-                    {req.student_name && <span className="block text-xs text-muted">re: {req.student_name}</span>}
+                    {req.student_name && <span className="block text-xs text-muted">{t("reLabel", language)} {req.student_name}</span>}
                   </td>
                   <td className="px-4 py-3 text-muted">
                     {req.created_at ? new Date(req.created_at).toLocaleDateString() : "—"}

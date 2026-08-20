@@ -34,7 +34,7 @@ function QuickMessageBox({ req, token, language, onClose }) {
       setSent(true);
       setBody("");
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Couldn't send message.");
+      setError(err instanceof ApiError ? err.message : t("couldntSendMessage", language));
     } finally {
       setSending(false);
     }
@@ -107,7 +107,7 @@ function EscalationRow({ req, token, onResolved, resolvable, canForward, canMess
     <tr>
       <td className="px-4 py-3 font-medium text-ink-text">
         {req.requester_name}
-        {req.student_name && <span className="block text-xs text-muted">re: {req.student_name}</span>}
+        {req.student_name && <span className="block text-xs text-muted">{t("reLabel", language)} {req.student_name}</span>}
       </td>
       <td className="px-4 py-3 text-muted">{requestTypeLabel(req.request_type, language)}</td>
       <td className="px-4 py-3 text-muted">{req.message || "—"}</td>

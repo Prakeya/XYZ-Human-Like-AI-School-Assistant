@@ -16,17 +16,23 @@ const CONVO_KEY_PREFIX = "xyzai_conversation_id_";
 // per role, plus the two escalation entry points from section 9. These just
 // prefill/send a message through the normal chat pipeline -- no shortcut
 // around intent detection or permissions.
+//
+// IMPORTANT: `message` is the literal text sent to the backend and MUST stay
+// in English -- the demo-mode intent engine (backend/app/intent_engine.py)
+// matches these phrases with English-only regex, so translating the sent
+// text would silently break intent detection for every non-English user.
+// `labelKey` is what's shown on the button and IS translated.
 const SUGGESTIONS = {
-  student: ["What is my attendance?"],
-  parent: ["How much attendance does my child have?"],
-  teacher: ["Mark Rahul absent today."],
-  principal: ["What is the overall attendance?"],
+  student: [{ message: "What is my attendance?", labelKey: "suggestionStudentAttendance" }],
+  parent: [{ message: "How much attendance does my child have?", labelKey: "suggestionParentAttendance" }],
+  teacher: [{ message: "Mark Rahul absent today.", labelKey: "suggestionTeacherMarkAbsent" }],
+  principal: [{ message: "What is the overall attendance?", labelKey: "suggestionPrincipalAttendance" }],
 };
 
 export default function ChatPanel() {
   const { user, token } = useAuth();
   const { language } = useLanguage();
-  const persona = personaFor(user?.role);
+  const persona = personaFor(user?.role, language);
   const speech = useSpeech(language);
 
   const [messages, setMessages] = useState([]);
@@ -108,7 +114,7 @@ export default function ChatPanel() {
           pendingAction: res.pending_action || null,
         });
       } catch (err) {
-        const msg = err instanceof ApiError ? err.message : "Something went wrong. Please try again.";
+        const msg = err instanceof ApiError ? err.message : t("genericSendError", language);
         setError(msg);
         setHadError(true);
         pushMessage({ sender: "error", content: msg });
@@ -158,7 +164,7 @@ export default function ChatPanel() {
             <Avatar state="idle" role={user?.role} color={persona.color} size={72} />
             <div>
               <p className="font-display text-lg text-ink">
-                {persona.tagline}, at your service.
+                {persona.tagline}{t("atYourServiceSuffix", language)}
               </p>
               <p className="mt-1 text-sm text-muted">{t("askSuggestionHelp", language)}</p>
             </div>
@@ -186,7 +192,7 @@ export default function ChatPanel() {
               <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-line [animation-delay:-0.15s]" />
               <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-line" />
             </span>
-            <span>XYZ AI is checking with the backend…</span>
+            <span>{t("checkingBackend", language)}</span>
           </div>
         )}
 
@@ -200,11 +206,11 @@ export default function ChatPanel() {
         <div className="flex flex-wrap gap-2 border-t border-line bg-white px-5 py-3">
           {(SUGGESTIONS[user?.role] || []).map((s) => (
             <button
-              key={s}
-              onClick={() => send(s)}
+              key={s.message}
+              onClick={() => send(s.message)}
               className="rounded-full border border-line px-3 py-1.5 text-xs text-ink-text hover:border-marigold hover:text-marigold-deep transition-colors"
             >
-              {s}
+              {t(s.labelKey, language)}
             </button>
           ))}
           {/* Mirrors the backend's own rules (permissions.can_create_teacher_call_request /

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { SUPPORTED_LANGUAGES } from "../utils/i18n.js";
+import { SUPPORTED_LANGUAGES, t } from "../utils/i18n.js";
 import { useLanguage } from "../context/LanguageContext.jsx";
 
 // Custom-rendered dropdown instead of a native <select>. Native <select>
@@ -37,7 +37,7 @@ export default function LanguageSelector({ compact = false, openUp = false }) {
         onClick={() => setOpen((o) => !o)}
         aria-haspopup="listbox"
         aria-expanded={open}
-        aria-label="Choose language"
+        aria-label={t("chooseLanguageAriaLabel", language)}
         className={`flex w-full items-center justify-between gap-2 rounded-full border border-line bg-white/80 text-ink-text text-sm font-body
           focus:outline-none focus:ring-2 focus:ring-marigold/60 ${compact ? "px-3 py-1" : "px-4 py-2"}`}
       >

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth, ApiError } from "../context/AuthContext.jsx";
 import { useLanguage } from "../context/LanguageContext.jsx";
 import { t, dirFor } from "../utils/i18n.js";
-import { PERSONAS } from "../utils/personas.js";
+import { PERSONA_META, personaFor } from "../utils/personas.js";
 import LanguageSelector from "../components/LanguageSelector.jsx";
 
 // Seeded demo accounts from backend/app/seed_data.py -- same DEMO_PASSWORD
@@ -80,13 +80,16 @@ export default function Login() {
             <p className="mt-3 text-sm text-white/70">{t("tagline", language)}</p>
           </div>
           <div className="space-y-2 border-t border-white/10 pt-5">
-            {Object.entries(PERSONAS).map(([role, p]) => (
-              <div key={role} className="flex items-center gap-2 text-xs text-white/60">
-                <span className="h-2 w-2 rounded-full" style={{ background: p.color }} />
-                <span className="font-medium text-white/85">{p.label}</span>
-                <span>— {p.tagline}</span>
-              </div>
-            ))}
+            {Object.entries(PERSONA_META).map(([role, meta]) => {
+              const p = personaFor(role, language);
+              return (
+                <div key={role} className="flex items-center gap-2 text-xs text-white/60">
+                  <span className="h-2 w-2 rounded-full" style={{ background: p.color }} />
+                  <span className="font-medium text-white/85">{p.label}</span>
+                  <span>— {p.tagline}</span>
+                </div>
+              );
+            })}
           </div>
         </div>
 
@@ -96,18 +99,21 @@ export default function Login() {
           <p className="mt-1 text-sm text-muted">{t("pickRoleHint", language)}</p>
 
           <div className="mt-5 grid grid-cols-2 gap-1.5 rounded-2xl bg-paper-alt p-1 sm:flex sm:rounded-full">
-            {Object.entries(PERSONAS).map(([role, p]) => (
-              <button
-                key={role}
-                onClick={() => setActiveRole(role)}
-                className={`rounded-full px-2 py-1.5 text-xs font-medium transition-colors sm:flex-1 ${
-                  activeRole === role ? "bg-white shadow text-ink" : "text-muted hover:text-ink-text"
-                }`}
-                style={activeRole === role ? { color: p.color } : {}}
-              >
-                {p.label}
-              </button>
-            ))}
+            {Object.entries(PERSONA_META).map(([role]) => {
+              const p = personaFor(role, language);
+              return (
+                <button
+                  key={role}
+                  onClick={() => setActiveRole(role)}
+                  className={`rounded-full px-2 py-1.5 text-xs font-medium transition-colors sm:flex-1 ${
+                    activeRole === role ? "bg-white shadow text-ink" : "text-muted hover:text-ink-text"
+                  }`}
+                  style={activeRole === role ? { color: p.color } : {}}
+                >
+                  {p.label}
+                </button>
+              );
+            })}
           </div>
 
           <div className="mt-3 flex flex-wrap gap-2">
@@ -162,7 +168,7 @@ export default function Login() {
           </form>
 
           <p className="mt-4 text-[11px] text-muted">
-            {t("demoAccounts", language)}: every seed account uses the password{" "}
+            {t("demoAccounts", language)}: {t("demoPasswordNote", language)}{" "}
             <span className="font-mono text-ink-text">demo1234</span>.
           </p>
         </div>

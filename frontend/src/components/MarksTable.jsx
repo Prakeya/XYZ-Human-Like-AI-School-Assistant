@@ -74,7 +74,7 @@ export function TeacherMarksPanel({ roster = [], token }) {
     } catch (err) {
       if (requestId !== requestIdRef.current) return;
       setMarks([]);
-      setLoadError(err instanceof ApiError ? err.message : "Couldn't load marks.");
+      setLoadError(err instanceof ApiError ? err.message : t("couldntLoadMarks", language));
     } finally {
       if (requestId === requestIdRef.current) setLoading(false);
     }
@@ -112,7 +112,7 @@ export function TeacherMarksPanel({ roster = [], token }) {
       setForm({ subject: "", term: "", score: "", max_score: "100" });
       loadMarks(studentName);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Couldn't save marks.");
+      setError(err instanceof ApiError ? err.message : t("couldntSaveMarks", language));
     } finally {
       setSaving(false);
     }
@@ -177,7 +177,7 @@ export function TeacherMarksPanel({ roster = [], token }) {
           />
         </div>
         <div>
-          <label className="mb-1 block text-[11px] font-medium text-muted">Max</label>
+          <label className="mb-1 block text-[11px] font-medium text-muted">{t("maxLabel", language)}</label>
           <input
             type="number"
             value={form.max_score}

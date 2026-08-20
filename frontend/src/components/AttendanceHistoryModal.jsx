@@ -22,7 +22,7 @@ export default function AttendanceHistoryModal({ studentName, token, onClose }) 
         if (!cancelled) setData(res);
       })
       .catch(() => {
-        if (!cancelled) setError("Couldn't load attendance history.");
+        if (!cancelled) setError(t("couldntLoadAttendanceHistory", language));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -53,15 +53,15 @@ export default function AttendanceHistoryModal({ studentName, token, onClose }) 
         {data && (
           <div className="space-y-4">
             <p className="text-sm text-muted">
-              {data.attendance_percentage}% overall · {data.days_considered} days considered ·{" "}
-              {data.days_absent} absent
+              {data.attendance_percentage}% {t("historyOverallLabel", language)} · {data.days_considered} {t("daysConsideredLabel", language)} ·{" "}
+              {data.days_absent} {t("absentCountLabel", language)}
             </p>
             {data.months.map((m) => (
               <div key={m.month} className="rounded-xl border border-line p-3">
                 <div className="mb-2 flex items-center justify-between">
                   <p className="font-medium text-ink-text">{m.month}</p>
                   <p className="text-xs text-muted">
-                    {m.attendance_percentage}% · {m.days_absent} absent / {m.days_considered}
+                    {m.attendance_percentage}% · {m.days_absent} {t("absentCountLabel", language)} / {m.days_considered}
                   </p>
                 </div>
                 <ul className="divide-y divide-line text-sm">

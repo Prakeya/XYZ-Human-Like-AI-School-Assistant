@@ -22,7 +22,7 @@ const DASHBOARD_BY_ROLE = {
 export default function Shell() {
   const { user, token, logout } = useAuth();
   const { language } = useLanguage();
-  const persona = personaFor(user?.role);
+  const persona = personaFor(user?.role, language);
 
   const [view, setView] = useState("dashboard"); // "dashboard" | "assistant"
   const [dashboardData, setDashboardData] = useState(null);
@@ -39,7 +39,7 @@ export default function Shell() {
         if (!cancelled) setDashboardData(res);
       } catch (err) {
         if (!cancelled) {
-          setDashboardError(err instanceof ApiError ? err.message : "Couldn't load dashboard data.");
+          setDashboardError(err instanceof ApiError ? err.message : t("loadDashboardError", language));
         }
       } finally {
         if (!cancelled) setLoadingDashboard(false);
@@ -139,7 +139,7 @@ export default function Shell() {
                 </div>
               </div>
 
-              {loadingDashboard && <p className="text-sm text-muted">Loading dashboard…</p>}
+              {loadingDashboard && <p className="text-sm text-muted">{t("loadingDashboard", language)}</p>}
               {dashboardError && <p className="text-sm text-danger">{dashboardError}</p>}
               {dashboardData && DashboardComponent && (
                 <DashboardComponent
@@ -151,7 +151,7 @@ export default function Shell() {
                       const res = await api.getDashboard(token);
                       setDashboardData(res);
                     } catch (err) {
-                      setDashboardError(err instanceof ApiError ? err.message : "Couldn't refresh dashboard data.");
+                      setDashboardError(err instanceof ApiError ? err.message : t("refreshDashboardError", language));
                     }
                   }}
                 />
