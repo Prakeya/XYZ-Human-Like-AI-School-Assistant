@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { api, ApiError } from "../api.js";
 import { useLanguage } from "../context/LanguageContext.jsx";
-import { t } from "../utils/i18n.js";
+import { t, tableHeaderClass } from "../utils/i18n.js";
 
 /**
  * Read-only marks table, used on Student/Parent dashboards and (read-only)
@@ -13,7 +13,7 @@ export function MarksTable({ marks = [], language }) {
   }
   return (
     <table className="w-full text-sm">
-      <thead className="bg-paper-alt text-left text-xs uppercase tracking-wide text-muted">
+      <thead className={tableHeaderClass(language)}>
         <tr>
           <th className="px-4 py-3">{t("subjectCol", language)}</th>
           <th className="px-4 py-3">{t("termCol", language)}</th>
@@ -125,6 +125,7 @@ export function TeacherMarksPanel({ roster = [], token }) {
       </div>
 
       <div className="flex flex-wrap items-center gap-2 border-b border-line px-4 py-3">
+        <label className="text-xs font-medium text-muted">{t("selectStudentLabel", language)}</label>
         <select
           value={studentName}
           onChange={(e) => setStudentName(e.target.value)}

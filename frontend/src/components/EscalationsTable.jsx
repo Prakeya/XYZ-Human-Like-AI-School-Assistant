@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { api, ApiError } from "../api.js";
 import { useLanguage } from "../context/LanguageContext.jsx";
-import { t } from "../utils/i18n.js";
+import { t, tableHeaderClass } from "../utils/i18n.js";
 
 function requestTypeLabel(reqType, language) {
   if (reqType === "teacher_call") return t("talkToTeacher", language);
@@ -220,7 +220,7 @@ export default function EscalationsTable({
         </p>
       ) : (
         <table className="w-full text-sm">
-          <thead className="bg-paper-alt text-left text-xs uppercase tracking-wide text-muted">
+          <thead className={tableHeaderClass(language)}>
             <tr>
               <th className="px-4 py-3">{t("parentStudentCol", language)}</th>
               <th className="px-4 py-3">{t("requestTypeCol", language)}</th>

@@ -3,7 +3,7 @@ import { StatTile } from "../components/AttendanceCard.jsx";
 import EscalationsTable from "../components/EscalationsTable.jsx";
 import MessagesPanel from "../components/MessagesPanel.jsx";
 import { useLanguage } from "../context/LanguageContext.jsx";
-import { t } from "../utils/i18n.js";
+import { t, tableHeaderClass } from "../utils/i18n.js";
 
 export default function PrincipalDashboard({ data, token, currentUserId, onRefresh }) {
   const { language } = useLanguage();
@@ -32,7 +32,7 @@ export default function PrincipalDashboard({ data, token, currentUserId, onRefre
           <p className="px-4 py-6 text-center text-sm text-muted">{t("noTeachersOnRecord", language)}</p>
         ) : (
           <table className="w-full text-sm">
-            <thead className="bg-paper-alt text-left text-xs uppercase tracking-wide text-muted">
+            <thead className={tableHeaderClass(language)}>
               <tr>
                 <th className="px-4 py-3">{t("teacherCol", language)}</th>
                 <th className="px-4 py-3">{t("assignedClassesLabel", language)}</th>

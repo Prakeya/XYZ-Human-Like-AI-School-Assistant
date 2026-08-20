@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
 import { AttendanceCard } from "../components/AttendanceCard.jsx";
 import { MarksTable } from "../components/MarksTable.jsx";
 import MessagesPanel from "../components/MessagesPanel.jsx";
+import { api, ApiError } from "../api.js";
 import { useLanguage } from "../context/LanguageContext.jsx";
-import { t } from "../utils/i18n.js";
+import { t, tableHeaderClass } from "../utils/i18n.js";
 
 function requestTypeLabel(reqType, language) {
   if (reqType === "teacher_call") return t("talkToTeacher", language);
@@ -21,12 +22,124 @@ function statusBadge(req, language) {
   return <span className="rounded-full bg-paper-alt px-2.5 py-1 text-xs font-medium text-muted">{t("pendingBadge", language)}</span>;
 }
 
-export default function ParentDashboard({ data, token, currentUserId }) {
+/**
+ * Manual "Raise a request" form -- the form equivalent of the chat "Talk to
+ * Teacher" / "Contact School Management" confirm flow (spec section 3), for
+ * a parent who'd rather fill in a form than type it to the assistant. Posts
+ * to the same backend tools via POST /support (see api.createSupportRequest).
+ */
+function RaiseRequestForm({ kids, token, language, onDone }) {
+  const [open, setOpen] = useState(false);
+  const [requestType, setRequestType] = useState("teacher_call");
+  const [studentName, setStudentName] = useState(kids[0]?.student_name || "");
+  const [message, setMessage] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(null);
+
+  if (!open) {
+    return (
+      <div className="border-t border-line px-4 py-3">
+        <button
+          onClick={() => setOpen(true)}
+          className="rounded-full bg-ink px-4 py-2 text-xs font-medium text-white"
+        >
+          {t("raiseRequestBtn", language)}
+        </button>
+      </div>
+    );
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setSubmitting(true);
+    setError(null);
+    try {
+      await api.createSupportRequest(token, {
+        request_type: requestType,
+        student_name: requestType === "teacher_call" ? studentName || undefined : undefined,
+        message: message.trim() || undefined,
+      });
+      setMessage("");
+      setOpen(false);
+      onDone();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : t("requestSubmitError", language));
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-3 border-t border-line bg-paper-alt/40 px-4 py-4">
+      <div>
+        <label className="mb-1 block text-xs font-medium text-muted">{t("requestTypeLabel", language)}</label>
+        <select
+          value={requestType}
+          onChange={(e) => setRequestType(e.target.value)}
+          className="w-full rounded-lg border border-line px-2.5 py-1.5 text-sm sm:w-auto"
+        >
+          <option value="teacher_call">{t("talkToTeacher", language)}</option>
+          <option value="management_support">{t("contactManagement", language)}</option>
+        </select>
+      </div>
+
+      {requestType === "teacher_call" && kids.length > 1 && (
+        <div>
+          <label className="mb-1 block text-xs font-medium text-muted">{t("aboutChildLabel", language)}</label>
+          <select
+            value={studentName}
+            onChange={(e) => setStudentName(e.target.value)}
+            className="w-full rounded-lg border border-line px-2.5 py-1.5 text-sm sm:w-auto"
+          >
+            {kids.map((c) => (
+              <option key={c.student_name} value={c.student_name}>
+                {c.student_name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      <div>
+        <label className="mb-1 block text-xs font-medium text-muted">{t("requestMessageLabel", language)}</label>
+        <textarea
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          placeholder={t("requestMessagePlaceholder", language)}
+          rows={3}
+          className="w-full rounded-lg border border-line px-2.5 py-1.5 text-sm"
+        />
+      </div>
+
+      {error && <p className="text-xs text-danger">{error}</p>}
+
+      <div className="flex gap-2">
+        <button
+          type="submit"
+          disabled={submitting}
+          className="rounded-full bg-ink px-4 py-2 text-xs font-medium text-white disabled:opacity-50"
+        >
+          {submitting ? t("submittingBtn", language) : t("submitRequestBtn", language)}
+        </button>
+        <button
+          type="button"
+          onClick={() => setOpen(false)}
+          className="rounded-full border border-line px-4 py-2 text-xs font-medium text-ink-text"
+        >
+          {t("cancelBtn", language)}
+        </button>
+      </div>
+    </form>
+  );
+}
+
+export default function ParentDashboard({ data, token, currentUserId, onRefresh }) {
   const { language } = useLanguage();
   const children = data.children || [];
   const myComplaints = data.my_complaints || { pending: [], resolved: [] };
   const allComplaints = [...myComplaints.pending, ...myComplaints.resolved];
   const contacts = data.contacts || [];
+  const [justSubmitted, setJustSubmitted] = useState(false);
 
   return (
     <div className="space-y-6">
@@ -67,11 +180,16 @@ export default function ParentDashboard({ data, token, currentUserId }) {
         <div className="border-b border-line px-4 py-3">
           <h3 className="font-display text-base font-semibold text-ink">{t("myComplaintsTitle", language)}</h3>
         </div>
+        {justSubmitted && (
+          <p className="border-b border-line bg-success/10 px-4 py-2 text-xs font-medium text-success">
+            {t("requestSubmittedNote", language)}
+          </p>
+        )}
         {allComplaints.length === 0 ? (
           <p className="px-4 py-6 text-center text-sm text-muted">{t("noComplaintsYet", language)}</p>
         ) : (
           <table className="w-full text-sm">
-            <thead className="bg-paper-alt text-left text-xs uppercase tracking-wide text-muted">
+            <thead className={tableHeaderClass(language)}>
               <tr>
                 <th className="px-4 py-3">{t("requestTypeCol", language)}</th>
                 <th className="px-4 py-3">{t("dateCol", language)}</th>
@@ -94,6 +212,16 @@ export default function ParentDashboard({ data, token, currentUserId }) {
             </tbody>
           </table>
         )}
+        <RaiseRequestForm
+          kids={children}
+          token={token}
+          language={language}
+          onDone={async () => {
+            setJustSubmitted(true);
+            if (onRefresh) await onRefresh();
+            setTimeout(() => setJustSubmitted(false), 6000);
+          }}
+        />
       </div>
 
       <MessagesPanel

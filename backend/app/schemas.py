@@ -49,6 +49,16 @@ class EscalationConfirmRequest(BaseModel):
     message: Optional[str] = None
 
 
+class SupportRequestCreate(BaseModel):
+    """Manual (non-chat) creation of a support request, e.g. a parent using the
+    'Raise a request' form on their dashboard instead of going through the
+    chat/confirm flow. Same underlying tool + permission checks as the chat
+    path (tools.create_teacher_call_request / create_management_support_request)."""
+    request_type: str  # "teacher_call" | "management_support"
+    student_name: Optional[str] = None
+    message: Optional[str] = None
+
+
 class MarksCreate(BaseModel):
     student_name: str
     subject: str

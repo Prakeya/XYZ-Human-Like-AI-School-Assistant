@@ -56,7 +56,9 @@ export default function TraceRibbon({ trace, language }) {
     <div className="mt-2">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="text-[11px] font-mono uppercase tracking-wide text-muted hover:text-ink transition-colors"
+        className={`text-[11px] text-muted hover:text-ink transition-colors ${
+          language === "en" ? "font-mono uppercase tracking-wide" : ""
+        }`}
       >
         {open ? "▾" : "▸"} {t("trace", language)}
       </button>

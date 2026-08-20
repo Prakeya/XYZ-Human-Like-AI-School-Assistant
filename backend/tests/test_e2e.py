@@ -324,6 +324,49 @@ def test_escalation_decline_creates_no_row(client, db_session, app_modules):
 
 
 # ---------------------------------------------------------------------------
+# 11c. Manual "Raise a request" form (POST /support) -- same tool + DB row as
+# the chat confirm flow, just triggered without going through chat at all.
+# ---------------------------------------------------------------------------
+def test_manual_support_request_creates_db_row(client, db_session, app_modules):
+    _, models, _, _ = app_modules
+    headers, user = login(client, "parent.sharma")  # linked child: Rahul
+
+    resp = client.post(
+        "/support",
+        json={"request_type": "teacher_call", "student_name": "Rahul", "message": "Please call me back."},
+        headers=headers,
+    )
+    assert resp.status_code == 200, resp.text
+    body = resp.json()
+    assert body["confirmed"] is True
+    assert body["type"] == "teacher_call"
+
+    row = db_session.query(models.SupportRequest).filter(models.SupportRequest.id == body["request_id"]).first()
+    assert row is not None
+    assert row.requested_by_user_id == user["id"]
+    assert row.status == "submitted"
+    assert row.message == "Please call me back."
+
+    # It also shows up in the parent's own "my requests" list.
+    mine = client.get("/support/mine", headers=headers).json()
+    assert any(r["id"] == body["request_id"] for r in mine["pending"])
+
+
+def test_manual_support_request_bad_type_rejected(client):
+    headers, _ = login(client, "parent.sharma")
+    resp = client.post("/support", json={"request_type": "not_a_real_type"}, headers=headers)
+    assert resp.status_code == 400
+
+
+def test_manual_support_request_denied_for_principal(client):
+    """Principals don't self-escalate -- POST /support enforces the same
+    permission rule as the chat path (can_create_teacher_call_request)."""
+    headers, _ = login(client, "principal.nair")
+    resp = client.post("/support", json={"request_type": "teacher_call"}, headers=headers)
+    assert resp.status_code == 403
+
+
+# ---------------------------------------------------------------------------
 # 20. Conversation correction ("I meant Rahul, not Arjun")
 # ---------------------------------------------------------------------------
 def test_conversation_correction_updates_context(client):

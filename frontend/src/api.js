@@ -8,6 +8,7 @@
  *   POST /chat                   -> sendMessage(token, {...})
  *   GET  /chat/history/{id}      -> getHistory(token, conversationId)
  *   GET  /dashboard              -> getDashboard(token)
+ *   POST /support                -> createSupportRequest(token, {...})
  */
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
@@ -75,6 +76,9 @@ export const api = {
     request(`/support/${requestId}/forward`, { method: "PATCH", token }),
 
   getMyRequests: (token) => request("/support/mine", { token }),
+
+  createSupportRequest: (token, payload) =>
+    request("/support", { method: "POST", token, body: payload }),
 
   getAttendanceHistory: (token, studentName) =>
     request(`/dashboard/attendance-history${studentName ? `?student_name=${encodeURIComponent(studentName)}` : ""}`, { token }),
