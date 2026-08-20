@@ -77,6 +77,17 @@ TOOL_SCHEMA = [
         "description": "Escalate to school management (used after user confirms).",
         "input_schema": {"type": "object", "properties": {}},
     },
+    {
+        "name": "get_marks",
+        "description": (
+            "Get marks/academic scores. For a student, returns their own marks (no name needed). "
+            "For a parent, returns their linked child's marks (name only needed if they have more than "
+            "one child). For a teacher/principal, student_name is required."
+        ),
+        "input_schema": {"type": "object", "properties": {
+            "student_name": {"type": "string", "description": "Student's name. Omit for a student asking about their own marks."},
+        }},
+    },
 ]
 
 SYSTEM_PROMPT_TEMPLATE = """You are XYZ AI, a school assistant. The authenticated user's role is

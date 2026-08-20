@@ -51,20 +51,32 @@ export function TeacherMarksPanel({ roster = [], token }) {
   const [studentName, setStudentName] = useState(roster[0]?.student_name || "");
   const [marks, setMarks] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState(null);
   const [form, setForm] = useState({ subject: "", term: "", score: "", max_score: "100" });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
 
+  // Guards against a slower response for a previously-selected student
+  // resolving *after* a faster response for the one the teacher switched to,
+  // which would otherwise silently overwrite the correct marks with stale
+  // ones. Whichever request was fired most recently "wins".
+  const requestIdRef = React.useRef(0);
+
   const loadMarks = async (name) => {
     if (!name) return;
+    const requestId = ++requestIdRef.current;
     setLoading(true);
+    setLoadError(null);
     try {
       const res = await api.getMarks(token, name);
+      if (requestId !== requestIdRef.current) return; // a newer request has already started
       setMarks(res.marks || []);
-    } catch {
+    } catch (err) {
+      if (requestId !== requestIdRef.current) return;
       setMarks([]);
+      setLoadError(err instanceof ApiError ? err.message : "Couldn't load marks.");
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) setLoading(false);
     }
   };
 
@@ -72,6 +84,17 @@ export function TeacherMarksPanel({ roster = [], token }) {
     loadMarks(studentName);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [studentName]);
+
+  // If the roster changes (e.g. after a dashboard refresh) and the
+  // currently-selected student is no longer in it, fall back to the first
+  // roster entry instead of silently showing marks for a student who's no
+  // longer selectable in the dropdown.
+  React.useEffect(() => {
+    if (roster.length && !roster.some((s) => s.student_name === studentName)) {
+      setStudentName(roster[0].student_name);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roster]);
 
   async function handleAdd(e) {
     e.preventDefault();
@@ -117,6 +140,8 @@ export function TeacherMarksPanel({ roster = [], token }) {
 
       {loading ? (
         <p className="px-4 py-6 text-center text-sm text-muted">…</p>
+      ) : loadError ? (
+        <p className="px-4 py-6 text-center text-sm text-danger">{loadError}</p>
       ) : (
         <MarksTable marks={marks} language={language} />
       )}

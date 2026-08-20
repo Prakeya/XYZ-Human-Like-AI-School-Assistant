@@ -78,6 +78,23 @@ def _period_note(period_days: Optional[int]) -> str:
     return f" over the last {period_days} days"
 
 
+def _marks_summary_sentence(marks: list) -> str:
+    """Turn the marks tool's list of {subject, score, max_score, percentage}
+    dicts into a short, natural-language rundown for the chat reply -- the
+    dashboard already has the full table, so the assistant just needs to
+    speak the highlights, not reproduce every row."""
+    if not marks:
+        return ""
+    parts = [f"{m['subject']} {m['score']}/{m['max_score']} ({m['percentage']}%)" for m in marks[:4]]
+    return ", ".join(parts)
+
+
+def _average_percentage(marks: list) -> Optional[float]:
+    if not marks:
+        return None
+    return round(sum(m["percentage"] for m in marks) / len(marks), 1)
+
+
 def _persist(db: Session, convo_id: int, sender: str, content: str, language: str, meta: dict) -> models.Message:
     msg = models.Message(
         conversation_id=convo_id, sender=sender, content=content, language=language,
@@ -294,6 +311,49 @@ def handle_message(db: Session, user: models.User, text: str, language: str,
                 new_topic_context = prior_context.get("context", {})
             else:
                 reply_text = translations.render("unknown_intent", language)
+
+        elif result.intent == "get_marks":
+            # Same per-role name resolution as attendance: a student always
+            # means "me"; a parent's name entity (if any) is looked up only
+            # among their own linked children; teacher/principal must name
+            # a student. All of that is enforced again inside tools.get_marks
+            # / can_view_marks -- this layer only decides which name (if any)
+            # to pass through.
+            if user.role == models.Role.student:
+                tool_result = tools.get_marks(db, user)
+            elif user.role == models.Role.parent:
+                # "child_name" from the demo intent engine, "student_name" from
+                # the LLM tool schema (get_marks only has one param) -- accept either.
+                child_name = result.entities.get("child_name") or result.entities.get("student_name")
+                tool_result = tools.get_marks(db, user, student_name=child_name)
+            else:
+                student_name = result.entities.get("student_name")
+                if not student_name:
+                    raise PermissionDenied("Please tell me which student's marks you'd like to check.", reason_key="need_student_name")
+                tool_result = tools.get_marks(db, user, student_name=student_name)
+            trace.append({"step": "tool_call", "tool": "get_marks", "result": tool_result})
+            marks = tool_result["marks"]
+            if marks:
+                reply_text = note_prefix() + translations.render(
+                    "marks_summary", language,
+                    student=tool_result["student_name"], average=_average_percentage(marks),
+                    breakdown=_marks_summary_sentence(marks),
+                )
+            else:
+                reply_text = note_prefix() + translations.render("marks_none_yet", language, student=tool_result["student_name"])
+            new_topic_context = {"topic": "marks", "student_name": tool_result["student_name"]}
+
+        elif result.intent == "improvement_advice":
+            # No topic of its own -- resolve against whatever the previous
+            # turn was about, same pattern as followup_period.
+            topic = prior_context.get("context", {}).get("topic")
+            if topic == "marks":
+                reply_text = translations.render("improvement_advice_marks", language)
+            elif topic in ("own_attendance", "child_attendance", "named_student_attendance"):
+                reply_text = translations.render("improvement_advice_attendance", language)
+            else:
+                reply_text = translations.render("improvement_advice_generic", language)
+            new_topic_context = prior_context.get("context", {})
 
         else:  # unknown, or confirm_yes/no with no pending action
             reply_text = note_prefix() + translations.render("unknown_intent", language)

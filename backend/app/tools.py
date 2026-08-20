@@ -438,6 +438,19 @@ def _serialize_marks(m: "models.Marks") -> dict:
 def get_marks(db: Session, user: models.User, student_name: Optional[str] = None) -> dict:
     if user.role == models.Role.student:
         student = user.student_profile
+    elif user.role == models.Role.parent:
+        # Same "my child" default-resolution as get_child_attendance: a single
+        # linked child is unambiguous, multiple children require the caller to
+        # say which one (surfaced as a clarifying question, not a hard error).
+        parent = user.parent_profile
+        if not parent or not parent.children:
+            raise PermissionDenied("No student is currently linked to your parent account.", reason_key="no_linked_child")
+        if student_name:
+            student = next((c for c in parent.children if c.name.lower() == student_name.strip().lower()), None)
+        elif len(parent.children) > 1:
+            raise ClarificationNeeded(", ".join(c.name for c in parent.children))
+        else:
+            student = parent.children[0]
     else:
         if not student_name:
             raise PermissionDenied("Please tell me which student's marks you'd like to check.", reason_key="need_student_name")

@@ -130,6 +130,26 @@ ATTENDANCE_QUERY_PATTERNS = [
     r"\bhow much attendance does\b",
 ]
 
+# "academics" / "marks" / "grades" -- the marks/report-card equivalent of
+# ATTENDANCE_QUERY_PATTERNS above. Deliberately broad (single-word triggers
+# like "academics" or "marks" are common in this app's own unknown_intent
+# copy and in casual follow-ups), since a narrower pattern would leave the
+# assistant unable to answer the exact capability it advertises.
+MARKS_QUERY_PATTERNS = [
+    r"\bacademic\w*\b", r"\bmarks?\b", r"\bgrades?\b", r"\bscores?\b", r"\breport card\b",
+    r"\bhow (did|is|are)\b.{0,20}\bdo(ing|es)?\b.{0,20}\b(school|class|subject|exam|test|academic\w*)\b",
+    r"\bhow (am|is|are) (i|he|she|they) doing\b", r"\bresults?\b.{0,10}\b(term|exam|test)\b",
+]
+
+# Open-ended "how can I improve" / "any tips" follow-ups. On their own these
+# carry no topic, so the orchestrator resolves them against whatever the
+# previous turn was about (attendance vs. marks) the same way it already
+# does for followup_period ("what about this week?").
+IMPROVEMENT_ADVICE_PATTERNS = [
+    r"\bhow (can|do) (i|he|she|they) improve\b", r"\bhow to improve\b", r"\bany tips\b",
+    r"\bhow (can|do) (i|he|she|they) (do better|get better)\b", r"\bwhat should (i|he|she|they) do\b",
+]
+
 PERIOD_PATTERNS = {
     "this week": 7, "this month": 30, "last week": 7, "today": 1, "past week": 7, "past month": 30,
 }
@@ -242,7 +262,8 @@ def detect(text: str, role: str, known_student_names: List[str], has_pending_con
         return IntentResult(intent="get_school_analytics", flags=flags, raw_text=text)
 
     # 8. Attendance queries -- own (student) or child's (parent), or teacher/principal
-    #    asking about a specific named student.
+    #    asking about a specific named student. Checked before the marks patterns
+    #    below since "attendance" always wins over a bare "academics"/"marks" match.
     if _matches_any(ATTENDANCE_QUERY_PATTERNS, low) or "attendance" in low:
         name = _extract_known_name(text, known_student_names)
         period_days = _extract_period_days(text)
@@ -253,7 +274,24 @@ def detect(text: str, role: str, known_student_names: List[str], has_pending_con
         # teacher / principal asking about a specific student by name
         return IntentResult(intent="get_named_student_attendance", entities={"student_name": name, "period_days": period_days}, flags=flags, raw_text=text)
 
-    # 9. Bare follow-up like "what about this week?" -- signal for orchestrator to reuse context.
+    # 8.5 Marks / academics queries -- own (student), child's (parent), or a
+    #     named student (teacher/principal). Same shape as the attendance
+    #     branch above, just against the marks tool layer instead.
+    if _matches_any(MARKS_QUERY_PATTERNS, low):
+        name = _extract_known_name(text, known_student_names)
+        if role == "student":
+            return IntentResult(intent="get_marks", entities={}, flags=flags, raw_text=text)
+        if role == "parent":
+            return IntentResult(intent="get_marks", entities={"child_name": name}, flags=flags, raw_text=text)
+        return IntentResult(intent="get_marks", entities={"student_name": name}, flags=flags, raw_text=text)
+
+    # 9. Open-ended "how can I improve?" / "any tips?" -- no topic of its own,
+    #    resolved by the orchestrator against whatever the previous turn's
+    #    topic (attendance or marks) was.
+    if _matches_any(IMPROVEMENT_ADVICE_PATTERNS, low):
+        return IntentResult(intent="improvement_advice", flags=flags, raw_text=text)
+
+    # 10. Bare follow-up like "what about this week?" -- signal for orchestrator to reuse context.
     if _extract_period_days(text) and len(low.split()) <= 8:
         return IntentResult(intent="followup_period", entities={"period_days": _extract_period_days(text)}, flags=flags, raw_text=text)
 
