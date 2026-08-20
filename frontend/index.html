@@ -6,8 +6,22 @@
     <title>XYZ AI — School Assistant</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!--
+      Fraunces/Inter/IBM Plex Mono only cover Latin glyphs. The app supports
+      10 non-Latin scripts (Devanagari, Tamil, Telugu, Bengali, Gujarati,
+      Gurmukhi, Kannada, Malayalam, Arabic for Urdu), so without dedicated
+      web fonts for those scripts, the browser falls back to whatever font
+      (if any) happens to be installed on the device -- inconsistent
+      weights, broken conjuncts, sometimes missing glyphs entirely. Noto Sans
+      has a matching subset for every one of those scripts at the same
+      weights as Inter, so it's added as a fallback in the font stack
+      (tailwind.config.js) and the browser picks the right subset per
+      character automatically -- English still renders in Inter/Fraunces,
+      every other language gets properly shaped native glyphs instead of an
+      unpredictable system substitute.
+    -->
     <link
-      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Noto+Sans+Tamil:wght@400;500;600;700&family=Noto+Sans+Telugu:wght@400;500;600;700&family=Noto+Sans+Bengali:wght@400;500;600;700&family=Noto+Sans+Gujarati:wght@400;500;600;700&family=Noto+Sans+Gurmukhi:wght@400;500;600;700&family=Noto+Sans+Kannada:wght@400;500;600;700&family=Noto+Sans+Malayalam:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
   </head>

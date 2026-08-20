@@ -139,6 +139,14 @@ export default function ChatPanel() {
     speech.startListening((finalText) => send(finalText));
   };
 
+  const micErrorKey = {
+    "insecure-context": "micErrorInsecureContext",
+    "not-allowed": "micErrorNotAllowed",
+    "service-not-allowed": "micErrorNotAllowed",
+    "audio-capture": "micErrorNoMic",
+    network: "micErrorNetwork",
+  }[speech.micError] || (speech.micError ? "micErrorGeneric" : null);
+
   const latestAssistantId = [...messages].reverse().find((m) => m.sender === "assistant")?.id;
 
   return (
@@ -235,8 +243,13 @@ export default function ChatPanel() {
         </div>
       )}
 
-      {!speech.supported && (
+      {!speech.supported && !speech.micError && (
         <p className="px-5 pt-2 text-[11px] text-muted">{t("speakNotSupported", language)}</p>
+      )}
+      {micErrorKey && (
+        <p className="px-5 pt-2 text-[11px] text-danger" role="alert">
+          {t(micErrorKey, language)}
+        </p>
       )}
 
       {/* Input */}

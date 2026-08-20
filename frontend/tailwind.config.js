@@ -28,9 +28,30 @@ export default {
           principal: "#5B4B8A",
         },
       },
+      // Each Noto Sans <Script> family only contains glyphs for that one
+      // script, so listing all of them is safe: for any given character the
+      // browser walks the stack and uses the first font that actually has a
+      // glyph for it. English text still renders in Fraunces/Inter (the
+      // Noto fonts are simply skipped, since they have no Latin glyphs of
+      // their own to prefer); Hindi/Marathi resolve to Noto Sans Devanagari,
+      // Tamil to Noto Sans Tamil, Urdu to Noto Sans Arabic, etc. -- so every
+      // language gets consistently shaped native glyphs instead of an
+      // unpredictable OS fallback.
       fontFamily: {
-        display: ["Fraunces", "serif"],
-        body: ["Inter", "system-ui", "sans-serif"],
+        display: [
+          "Fraunces",
+          "Noto Sans Devanagari", "Noto Sans Tamil", "Noto Sans Telugu",
+          "Noto Sans Bengali", "Noto Sans Gujarati", "Noto Sans Gurmukhi",
+          "Noto Sans Kannada", "Noto Sans Malayalam", "Noto Sans Arabic",
+          "serif",
+        ],
+        body: [
+          "Inter",
+          "Noto Sans Devanagari", "Noto Sans Tamil", "Noto Sans Telugu",
+          "Noto Sans Bengali", "Noto Sans Gujarati", "Noto Sans Gurmukhi",
+          "Noto Sans Kannada", "Noto Sans Malayalam", "Noto Sans Arabic",
+          "system-ui", "sans-serif",
+        ],
         mono: ["'IBM Plex Mono'", "monospace"],
       },
       keyframes: {
